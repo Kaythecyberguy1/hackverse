@@ -12,6 +12,7 @@ import Dashboard from './pages/Dashboard';
 import Profile from './pages/Profile';
 import { auth } from './services/auth.js';
 import LabPage from './pages/LabPage';
+import CTFPage from './pages/CTFPage';
 import ChallengePage from './pages/ChallengePage.jsx';
 // Protected Route Component
 function ProtectedRoute({ children }) {
@@ -62,6 +63,7 @@ export default function App() {
         
         <Route path="/labs" element={<Labs />} />
         <Route path="/labs/:slug" element={<LabPage />} />
+        <Route path="/ctf" element={CTFPage/>}</Route>
       </Routes>
       <Footer />
     </>
