@@ -1,124 +1,82 @@
 import React, { useEffect, useState } from "react";
-import "../assets/css/ChallengePage.css";
+import { api } from "../lib/api";
 
 export default function ChallengePage() {
-  const [labs, setLabs] = useState([
-    { name: "dvwa", description: "Damn Vulnerable Web App" },
-    { name: "bwapp", description: "Buggy Web App" },
-    { name: "juice-shop", description: "OWASP Juice Shop" },
-  ]); // fallback mock data
-
-  const [labUrls, setLabUrls] = useState({});
-  const [flags, setFlags] = useState({});
+  const [challenges, setChallenges] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [form, setForm] = useState({ title: "", category: "web", description: "", flag: "", points: 100 });
+  const [error, setError] = useState(null);
 
-  // Try fetching labs from backend
-  useEffect(() => {
-    async function fetchLabs() {
-      try {
-        const res = await fetch("http://localhost:8080/api/labs", {
-          headers: { Authorization: "Bearer hackverse-secret-token" },
-        });
-        if (res.ok) {
-          const data = await res.json();
-          setLabs(data);
-        }
-      } catch (err) {
-        console.log("Backend not running, using mock data");
-      }
-    }
-    fetchLabs();
-  }, []);
+  useEffect(() => { load(); }, []);
 
-  const startLab = async (name) => {
-    setLoading(true);
+  async function load() {
+    setLoading(true); setError(null);
+    try { const data = await api.list("challenges"); setChallenges(data || []); }
+    catch (err) { setError(err.message); }
+    finally { setLoading(false); }
+  }
+
+  function onChange(e) {
+    const val = e.target.type === "number" ? Number(e.target.value) : e.target.value;
+    setForm(prev => ({ ...prev, [e.target.name]: val }));
+  }
+
+  async function handleSubmit(e) {
+    e.preventDefault(); setError(null);
     try {
-      const res = await fetch(`http://localhost:8080/api/labs/start/${name}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: "Bearer hackverse-secret-token",
-        },
-      });
-      const data = await res.json();
-      setLabUrls((prev) => ({ ...prev, [name]: data.url }));
-    } catch (err) {
-      alert("Error starting lab, backend might be down");
-    }
-    setLoading(false);
-  };
-
-  const submitFlag = async (name) => {
-    try {
-      const res = await fetch(`http://localhost:8080/api/labs/submit/${name}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: "Bearer hackverse-secret-token",
-        },
-        body: JSON.stringify({ flag: flags[name] || "" }),
-      });
-      const data = await res.json();
-      alert(data.message);
-    } catch (err) {
-      alert("Error submitting flag");
-    }
-  };
+      // SECURITY: Do not store plaintext flags in a public DB. Hash & verify server-side.
+      const payload = { ...form, createdAt: new Date().toISOString() };
+      const saved = await api.create("challenges", payload);
+      setChallenges(prev => [saved, ...prev]);
+      setForm({ title: "", category: "web", description: "", flag: "", points: 100 });
+    } catch (err) { setError(err.message); }
+  }
 
   return (
-    <div className="challenge-page">
-      <h1 className="text-4xl font-bold text-center mb-8">
-        🔥 Hackverse Challenges
-      </h1>
+    <div className="p-6">
+      <h2 className="text-2xl font-bold mb-3">Challenges</h2>
+      <div className="grid md:grid-cols-3 gap-6">
+        <div className="md:col-span-1 bg-white p-4 rounded-lg shadow-sm">
+          <h3 className="font-semibold mb-2">Create Challenge</h3>
+          <form onSubmit={handleSubmit} className="space-y-3">
+            <input name="title" value={form.title} onChange={onChange} placeholder="Title" required className="w-full p-2 border rounded" />
+            <select name="category" value={form.category} onChange={onChange} className="w-full p-2 border rounded">
+              <option value="web">Web</option>
+              <option value="crypto">Crypto</option>
+              <option value="forensics">Forensics</option>
+              <option value="pwn">Pwn</option>
+              <option value="misc">Misc</option>
+            </select>
+            <textarea name="description" value={form.description} onChange={onChange} placeholder="Description / hint" className="w-full p-2 border rounded" />
+            <input name="flag" value={form.flag} onChange={onChange} placeholder="FLAG{...} (hash on server)" className="w-full p-2 border rounded" />
+            <input name="points" type="number" value={form.points} onChange={onChange} min={0} className="w-full p-2 border rounded" />
+            {error && <p className="text-red-500 text-sm">{error}</p>}
+            <button className="w-full py-2 rounded-xl bg-gradient-to-r from-rose-500 to-pink-600 text-white">Create Challenge</button>
+          </form>
+          <p className="text-xs mt-3 text-gray-500">Security: Always hash flags server-side; never expose plaintext flags publicly.</p>
+        </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {labs.map((lab) => (
-          <div key={lab.name} className="challenge-card p-6">
-            <h2 className="text-xl font-semibold mb-2">{lab.name}</h2>
-            <p className="text-gray-400 mb-4">{lab.description}</p>
-
-            {!labUrls[lab.name] ? (
-              <button
-                onClick={() => startLab(lab.name)}
-                disabled={loading}
-                className="w-full py-2 px-4 rounded-xl bg-purple-600 hover:bg-purple-800"
-              >
-                🚀 Start Lab
-              </button>
-            ) : (
-              <div>
-                <p className="text-green-400 mb-2">
-                  ✅ Running at:{" "}
-                  <a
-                    href={labUrls[lab.name]}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="underline text-blue-400"
-                  >
-                    {labUrls[lab.name]}
-                  </a>
-                </p>
-                <div className="flex space-x-2">
-                  <input
-                    type="text"
-                    placeholder="Enter flag"
-                    className="flex-1 p-2 rounded bg-gray-800 text-white"
-                    value={flags[lab.name] || ""}
-                    onChange={(e) =>
-                      setFlags((prev) => ({ ...prev, [lab.name]: e.target.value }))
-                    }
-                  />
-                  <button
-                    onClick={() => submitFlag(lab.name)}
-                    className="px-4 py-2 bg-green-600 hover:bg-green-800 rounded-xl"
-                  >
-                    🏁 Submit
-                  </button>
+        <div className="md:col-span-2">
+          <div className="space-y-4">
+            {loading && <p>Loading challenges...</p>}
+            {!loading && challenges.length === 0 && <div className="border-dashed border-2 border-gray-200 rounded-lg p-6 text-center text-gray-500">No challenges yet — create one!</div>}
+            {challenges.map(c => (
+              <div key={c.id || c.title} className="p-4 border rounded-lg bg-white">
+                <div className="flex justify-between">
+                  <div>
+                    <h4 className="font-semibold">{c.title}</h4>
+                    <p className="text-sm text-gray-500">{c.description}</p>
+                    <div className="mt-2 text-xs">
+                      <span className="px-2 py-1 rounded-full bg-gray-100">{c.category}</span>
+                      <span className="px-2 py-1 rounded-full bg-gray-50 ml-2">{c.points} pts</span>
+                    </div>
+                  </div>
+                  <div className="text-xs text-gray-400">{new Date(c.createdAt).toLocaleString()}</div>
                 </div>
               </div>
-            )}
+            ))}
           </div>
-        ))}
+        </div>
       </div>
     </div>
   );
