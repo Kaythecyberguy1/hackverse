@@ -1,0 +1,7 @@
+services:
+  debian-lab:
+    build: .
+    container_name: debian-lab
+    hostname: hackverse
+    tty: true
+    stdin_open: true

@@ -1,0 +1,21 @@
+[
+    {
+      "slug": "linux-intro",
+      "name": "Intro to Linux",
+      "desc": "Learn basic Linux commands and find your first flag.",
+      "image": "hackverse/linux-intro"
+    },
+    {
+      "slug": "web-basics",
+      "name": "Web Basics",
+      "desc": "Discover how HTTP works and hunt for hidden web clues.",
+      "image": "hackverse/web-basics"
+    },
+    {
+      "slug": "crypto101",
+      "name": "Crypto 101",
+      "desc": "Crack simple ciphers and unlock the flag.",
+      "image": "hackverse/crypto101"
+    }
+  ]
+  

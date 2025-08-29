@@ -1,0 +1,40 @@
+services:
+  backend:
+    build: .
+    container_name: hackverse-backend
+    hostname: hackverse
+    ports:
+      - "5000:8080"       # host:container (backend available at http://localhost:5000)
+      - "30001-30050:30001-30050"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - NODE_ENV=development
+    networks:
+      - hackverse-net
+
+  # Lab Images (built at runtime, not inside Dockerfile)
+  linux-intro:
+    build: ./labs/linux-intro
+    image: hackverse/linux-intro
+    hostname: hackverse
+    networks:
+      - hackverse-net
+
+  web-basics:
+    build: ./labs/web-basics
+    image: hackverse/web-basics
+    hostname: hackverse
+    networks:
+      - hackverse-net
+
+  crypto101:
+    build: ./labs/crypto101
+    image: hackverse/crypto101
+    hostname: hackverse
+    networks:
+      - hackverse-net
+
+networks:
+  hackverse-net:
+    driver: bridge

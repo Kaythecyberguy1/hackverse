@@ -1,0 +1,19 @@
+body {
+    background: #0d0d0d;
+    color: #fff;
+    font-family: "Fira Code", monospace;
+  }
+  
+  h1 {
+    text-shadow: 0 0 20px #6a0dad;
+  }
+  
+  .card {
+    transition: transform 0.2s ease-in-out;
+  }
+  
+  .card:hover {
+    transform: scale(1.05);
+    border-color: #6a0dad;
+  }
+  
